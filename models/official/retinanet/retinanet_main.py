@@ -91,6 +91,12 @@ flags.DEFINE_integer(
     'eval_timeout', None,
     'Maximum seconds between checkpoints before evaluation terminates.')
 
+# Quantization parameters:
+flags.DEFINE_bool('quantize', False, 'Should graph be quantized')
+flags.DEFINE_integer('quantize_delay', 0, 'Steps to delay quantization')
+flags.DEFINE_integer('quantize_weights_bits', 8, 'Weight precision')
+flags.DEFINE_integer('quantize_data_bits', 8, 'Data precision')
+flags.DEFINE_string('quantize_scope', None, 'Quantized scope')
 
 FLAGS = flags.FLAGS
 
@@ -128,6 +134,12 @@ def main(argv):
       resnet_checkpoint=FLAGS.resnet_checkpoint,
       val_json_file=FLAGS.val_json_file,
       mode=FLAGS.mode,
+      # Quantization parameters:
+      quantize=FLAGS.quantize,
+      quantize_delay=FLAGS.quantize_delay,
+      quantize_weights_bits=FLAGS.quantize_weights_bits,
+      quantize_data_bits=FLAGS.quantize_data_bits,
+      quantize_scope=FLAGS.quantize_scope
   )
   config_proto = tf.ConfigProto(
       allow_soft_placement=True, log_device_placement=False)

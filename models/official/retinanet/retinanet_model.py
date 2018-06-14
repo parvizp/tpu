@@ -337,6 +337,13 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
   total_loss, cls_loss, box_loss = _detection_loss(cls_outputs, box_outputs,
                                                    labels, params)
 
+  # Setup quantization.
+  if params['quantize']:
+    if mode == tf.estimator.ModeKeys.TRAIN:
+      tf.contrib.quantize.experimental_create_training_graph(input_graph=tf.get_default_graph(), weight_bits=params['quantize_weights_bits'], activation_bits=params['quantize_data_bits'], quant_delay=params['quantize_delay'], freeze_bn_delay=None, scope=params['quantize_scope'])
+    elif mode == tf.estimator.ModeKeys.EVAL:
+      tf.contrib.quantize.experimental_create_eval_graph(input_graph=tf.get_default_graph(), weight_bits=params['quantize_weights_bits'], activation_bits=params['quantize_data_bits'], scope=params['quantize_scope'])
+
   if mode == tf.estimator.ModeKeys.TRAIN:
     optimizer = tf.train.MomentumOptimizer(
         learning_rate, momentum=params['momentum'])
