@@ -598,7 +598,7 @@ def retinanet(features,
   return class_outputs, box_outputs
 
 
-def remove_variables(variables, resnet_depth=50):
+def remove_variables(variables, params):
   """Removes low-level variables from the input.
 
   Removing low-level parameters (e.g., initial convolution layer) from training
@@ -615,7 +615,12 @@ def remove_variables(variables, resnet_depth=50):
     var_list: a list containing variables for training
 
   """
-  var_list = [v for v in variables if v.name.find('resnet%s/conv2d' % resnet_depth) == -1 or v.name.find('_quant') >= 0]
+  resnet_depth = params['resnet_depth']
+  if params['freeze_resnet_variables']:
+    var_list = [v for v in variables if v.name.find('resnet%s/conv2d' % resnet_depth) == -1 or v.name.find('_quant') >= 0]
+  else:
+    var_list = variables
+
   for var in var_list:
     tf.logging.info('Training variable (after filtering): ' + var.name)
   return var_list

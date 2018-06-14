@@ -100,6 +100,7 @@ flags.DEFINE_integer('quantize_weights_bits', 8, 'Weight precision')
 flags.DEFINE_integer('quantize_data_bits', 8, 'Data precision')
 flags.DEFINE_string('quantize_scope', None, 'Quantized scope')
 
+flags.DEFINE_bool('freeze_resnet_variables', True, 'Do not train the base ResNet variables.')
 flags.DEFINE_bool('export_frozen', False, 'During evaluation, generate frozen graph.')
 
 
@@ -149,6 +150,7 @@ def main(argv):
       use_tpu=FLAGS.use_tpu,
       retinanet_checkpoint=FLAGS.retinanet_checkpoint,
       finetune=FLAGS.finetune,
+      freeze_resnet_variables=FLAGS.freeze_resnet_variables,
       val_json_file=FLAGS.val_json_file,
       mode=FLAGS.mode,
       # Quantization parameters:

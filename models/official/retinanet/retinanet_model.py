@@ -364,9 +364,7 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
 
     # Batch norm requires update_ops to be added as a train_op dependency.
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    var_list = variable_filter_fn(
-        tf.trainable_variables(),
-        params['resnet_depth']) if variable_filter_fn else None
+    var_list = variable_filter_fn(tf.trainable_variables(), params) if variable_filter_fn else None
     with tf.control_dependencies(update_ops):
       train_op = optimizer.minimize(total_loss, global_step, var_list=var_list)
   else:
