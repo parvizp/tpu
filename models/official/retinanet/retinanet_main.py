@@ -216,9 +216,10 @@ def main(argv):
         config=run_config,
         params=params)
 
+    train_hooks = []
     # Make sure global step is reset to 0 regardless of checkpoint.
     # Might be able to use 'init_fn(scaffold, session)' instead.
-    train_hooks = [ResetGlobalStepHook()]
+    #train_hooks = [ResetGlobalStepHook()]
 
     train_estimator.train(
         input_fn=dataloader.InputReader(FLAGS.training_file_pattern,

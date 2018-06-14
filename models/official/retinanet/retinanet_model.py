@@ -356,6 +356,11 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
     elif mode == tf.estimator.ModeKeys.EVAL:
       tf.contrib.quantize.experimental_create_eval_graph(input_graph=tf.get_default_graph(), weight_bits=params['quantize_weights_bits'], activation_bits=params['quantize_data_bits'], scope=params['quantize_scope'])
 
+    # Check the fake quant ops that were added to graph.
+    fake_quant_ops = [op for op in tf.get_default_graph().get_operations() if op.type in ['FakeQuantWithMinMaxVars']]
+    for fake_quant_op in fake_quant_ops:
+      tf.logging.info('Fake Quant: ' + fake_quant_op.name)
+
   if mode == tf.estimator.ModeKeys.TRAIN:
     optimizer = tf.train.MomentumOptimizer(
         learning_rate, momentum=params['momentum'])
