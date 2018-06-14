@@ -315,13 +315,20 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
     return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
   # Load pretrained model from checkpoint.
-  if params['resnet_checkpoint'] and mode == tf.estimator.ModeKeys.TRAIN:
+  if params['retinanet_checkpoint'] and mode == tf.estimator.ModeKeys.TRAIN:
 
     def scaffold_fn():
       """Loads pretrained model through scaffold function."""
-      tf.train.init_from_checkpoint(params['resnet_checkpoint'], {
-          '/': 'resnet%s/' % params['resnet_depth'],
-      })
+      # Make sure not to restore quant variables since they may not exist (from float checkpoint).
+      if params['finetune'] == False:
+        # Only restore ResNet variables.
+        variables_to_restore = [var for var in tf.contrib.slim.get_variables_to_restore() if 'resnet%s/' % params['resnet_depth'] in var.name and '_quant' not in var.name]
+        assignment_map = {var.name.split(':')[0]: var for var in variables_to_restore}
+      else:
+        # Restore all variables.
+        raise Exception('Unimplemented')
+
+      tf.train.init_from_checkpoint(params['retinanet_checkpoint'], assignment_map)
       return tf.train.Scaffold()
   else:
     scaffold_fn = None
@@ -464,7 +471,7 @@ def default_hparams():
       delta=0.1,
       box_loss_weight=50.0,
       # resnet checkpoint
-      resnet_checkpoint=None,
+      retinanet_checkpoint=None,
       # output detection
       box_max_detected=100,
       box_iou_threshold=0.5,

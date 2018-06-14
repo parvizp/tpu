@@ -56,9 +56,11 @@ flags.DEFINE_bool(
     'Use XLA even if use_tpu is false.  If use_tpu is true, we always use XLA, '
     'and this flag has no effect.')
 flags.DEFINE_string('model_dir', None, 'Location of model_dir')
-flags.DEFINE_string('resnet_checkpoint', '',
-                    'Location of the ResNet50 checkpoint to use for model '
+flags.DEFINE_string('retinanet_checkpoint', '',
+                    'Location of the RetinaNet checkpoint to use for model '
                     'initialization.')
+flags.DEFINE_bool('finetune', False, 'If False, only restore the ResNet50 variables from checkpoint')
+
 flags.DEFINE_string('hparams', '',
                     'Comma separated k=v pairs of hyperparameters.')
 flags.DEFINE_integer(
@@ -131,7 +133,8 @@ def main(argv):
       num_shards=FLAGS.num_shards,
       num_examples_per_epoch=FLAGS.num_examples_per_epoch,
       use_tpu=FLAGS.use_tpu,
-      resnet_checkpoint=FLAGS.resnet_checkpoint,
+      retinanet_checkpoint=FLAGS.retinanet_checkpoint,
+      finetune=FLAGS.finetune,
       val_json_file=FLAGS.val_json_file,
       mode=FLAGS.mode,
       # Quantization parameters:
@@ -177,7 +180,7 @@ def main(argv):
           use_tpu=False,
           input_rand_hflip=False,
           skip_crowd=False,
-          resnet_checkpoint=None,
+          retinanet_checkpoint=None,
           is_training_bn=False,
           use_bfloat16=False,
       )
@@ -204,7 +207,7 @@ def main(argv):
         use_tpu=False,
         input_rand_hflip=False,
         skip_crowd=False,
-        resnet_checkpoint=None,
+        retinanet_checkpoint=None,
         is_training_bn=False,
         use_bfloat16=False,
     )
