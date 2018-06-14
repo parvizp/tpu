@@ -102,6 +102,16 @@ flags.DEFINE_string('quantize_scope', None, 'Quantized scope')
 
 FLAGS = flags.FLAGS
 
+class ResetGlobalStepHook(tf.train.SessionRunHook):
+  def __init__(self):
+    super(ResetGlobalStepHook, self).__init__()
+
+  def begin(self):
+    self._global_step_reset = tf.assign(tf.train.get_or_create_global_step(), 0)
+
+  def after_create_session(self, sess, coord):
+    tf.logging.info('Resetting global step...')
+    sess.run(self._global_step_reset)
 
 def main(argv):
   del argv  # Unused.
@@ -167,11 +177,17 @@ def main(argv):
         train_batch_size=FLAGS.train_batch_size,
         config=run_config,
         params=params)
+
+    # Make sure global step is reset to 0 regardless of checkpoint.
+    # Might be able to use 'init_fn(scaffold, session)' instead.
+    train_hooks = [ResetGlobalStepHook()]
+
     train_estimator.train(
         input_fn=dataloader.InputReader(FLAGS.training_file_pattern,
                                         is_training=True),
         max_steps=int((FLAGS.num_epochs * FLAGS.num_examples_per_epoch) /
-                      FLAGS.train_batch_size))
+                      FLAGS.train_batch_size),
+        hooks=train_hooks)
 
     if FLAGS.eval_after_training:
       # Run evaluation after training finishes.
