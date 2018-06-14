@@ -346,8 +346,15 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
 
   # Setup quantization.
   if params['quantize']:
+    tf.logging.info('Quantizing for scope: ' + str(params['quantize_scope']))
     if mode == tf.estimator.ModeKeys.TRAIN:
       tf.contrib.quantize.experimental_create_training_graph(input_graph=tf.get_default_graph(), weight_bits=params['quantize_weights_bits'], activation_bits=params['quantize_data_bits'], quant_delay=params['quantize_delay'], freeze_bn_delay=None, scope=params['quantize_scope'])
+      # Add quant min/max to summaries.
+      if params['use_tpu'] == False: # Doesn't work with TPU, complains about values being in a loop.
+        quant_vars = [var for var in tf.contrib.slim.get_variables_to_restore() if '_quant' in var.name and 'local_step' not in var.name]
+        for quant_var in quant_vars:
+          tf.summary.scalar('quant_vars/' + quant_var.name, quant_var)
+
     elif mode == tf.estimator.ModeKeys.EVAL:
       tf.contrib.quantize.experimental_create_eval_graph(input_graph=tf.get_default_graph(), weight_bits=params['quantize_weights_bits'], activation_bits=params['quantize_data_bits'], scope=params['quantize_scope'])
 
