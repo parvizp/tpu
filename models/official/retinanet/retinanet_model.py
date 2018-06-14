@@ -320,14 +320,12 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
     def scaffold_fn():
       """Loads pretrained model through scaffold function."""
       # Make sure not to restore quant variables since they may not exist (from float checkpoint).
+      variables_to_restore = [var for var in tf.contrib.slim.get_variables_to_restore() if '_quant' not in var.name and 'global_step' not in var.name]
       if params['finetune'] == False:
         # Only restore ResNet variables.
-        variables_to_restore = [var for var in tf.contrib.slim.get_variables_to_restore() if 'resnet%s/' % params['resnet_depth'] in var.name and '_quant' not in var.name]
-        assignment_map = {var.name.split(':')[0]: var for var in variables_to_restore}
-      else:
-        # Restore all variables.
-        raise Exception('Unimplemented')
+        variables_to_restore = [var for var in variables_to_restore if 'resnet%s/' % params['resnet_depth'] in var.name]
 
+      assignment_map = {var.name.split(':')[0]: var for var in variables_to_restore}
       tf.train.init_from_checkpoint(params['retinanet_checkpoint'], assignment_map)
       return tf.train.Scaffold()
   else:
