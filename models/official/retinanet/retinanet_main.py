@@ -100,6 +100,9 @@ flags.DEFINE_integer('quantize_weights_bits', 8, 'Weight precision')
 flags.DEFINE_integer('quantize_data_bits', 8, 'Data precision')
 flags.DEFINE_string('quantize_scope', None, 'Quantized scope')
 
+flags.DEFINE_bool('export_frozen', False, 'During evaluation, generate frozen graph.')
+
+
 FLAGS = flags.FLAGS
 
 class ResetGlobalStepHook(tf.train.SessionRunHook):
@@ -137,6 +140,7 @@ def main(argv):
   # Parse hparams
   hparams = retinanet_model.default_hparams()
   hparams.parse(FLAGS.hparams)
+  tf.logging.info('hparams = ' + str(hparams))
 
   params = dict(
       hparams.values(),
@@ -154,6 +158,8 @@ def main(argv):
       quantize_data_bits=FLAGS.quantize_data_bits,
       quantize_scope=FLAGS.quantize_scope
   )
+  tf.logging.info('params = ' + str(params))
+
   config_proto = tf.ConfigProto(
       allow_soft_placement=True, log_device_placement=False)
   if FLAGS.use_xla and not FLAGS.use_tpu:
