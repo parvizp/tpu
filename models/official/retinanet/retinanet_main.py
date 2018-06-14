@@ -117,6 +117,36 @@ class ResetGlobalStepHook(tf.train.SessionRunHook):
     tf.logging.info('Resetting global step...')
     sess.run(self._global_step_reset)
 
+
+class FreezeGraphHook(tf.train.SessionRunHook):
+  def after_create_session(self, sess, coord):
+    output_graph = '/tmp/frozen_retinanet.pb'
+    # TODO: Replace hard-coded tensor names with logic that depends on hparams (anchors, levels).
+    output_node_names = [
+      'retinanet/class_net/class-predict/BiasAdd',
+      'retinanet/class_net/class-predict_1/BiasAdd',
+      'retinanet/class_net/class-predict_2/BiasAdd',
+      'retinanet/class_net/class-predict_3/BiasAdd',
+      'retinanet/class_net/class-predict_4/BiasAdd',
+      'retinanet/box_net/box-predict/BiasAdd',
+      'retinanet/box_net/box-predict_1/BiasAdd',
+      'retinanet/box_net/box-predict_2/BiasAdd',
+      'retinanet/box_net/box-predict_3/BiasAdd',
+      'retinanet/box_net/box-predict_4/BiasAdd'
+    ]
+
+    output_graph_def = tf.graph_util.convert_variables_to_constants(
+      sess, 
+      tf.get_default_graph().as_graph_def(), 
+      output_node_names 
+    )
+    with tf.gfile.GFile(output_graph, "wb") as f:
+      f.write(output_graph_def.SerializeToString())
+    tf.logging.info('Wrote frozen graph: ' + output_graph)
+    tf.logging.info("%d ops in the frozen graph." % len(output_graph_def.node))
+
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -257,11 +287,17 @@ def main(argv):
         timeout_fn=terminate_eval):
 
       tf.logging.info('Starting to evaluate.')
+
+      eval_hooks = []
+      if FLAGS.export_frozen:
+        eval_hooks = [FreezeGraphHook()]
+
       try:
         eval_results = eval_estimator.evaluate(
             input_fn=dataloader.InputReader(FLAGS.validation_file_pattern,
                                             is_training=False),
-            steps=FLAGS.eval_steps)
+            steps=FLAGS.eval_steps,
+            hooks=eval_hooks)
         tf.logging.info('Eval results: %s' % eval_results)
 
         # Terminate eval job when final checkpoint is reached
