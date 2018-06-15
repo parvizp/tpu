@@ -338,7 +338,8 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
       params['learning_rate'], params['lr_warmup_init'],
       params['lr_warmup_step'], params['first_lr_drop_step'],
       params['second_lr_drop_step'], global_step)
-  tf.summary.scalar('learning_rate', learning_rate)
+  if params['use_tpu'] == False: # Doesn't work with TPU, complains about values being in a loop.
+    tf.summary.scalar('learning_rate', learning_rate)
   # cls_loss and box_loss are for logging. only total_loss is optimized.
   total_loss, cls_loss, box_loss = _detection_loss(cls_outputs, box_outputs,
                                                    labels, params)
